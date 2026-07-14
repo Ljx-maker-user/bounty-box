@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  nickname  String
+  avatar    String?
+  balance   Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  questions  Question[]
+  answers    Answer[]
+  payments   Payment[]
+  withdrawals Withdrawal[]
+}
+
+model Question {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  category    String?
+  tags        String?
+  bounty      Float
+  status      String   @default("open") // open, answered, closed
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  answers Answer[]
+  payments Payment[]
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  content    String
+  isAccepted Boolean  @default(false)
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  amount        Float
+  type          String   // deposit, bounty_payout, withdrawal, refund
+  status        String   @default("pending") // pending, success, failed, refunded
+  paymentOrderId String?
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  questionId    String?
+  question      Question? @relation(fields: [questionId], references: [id])
+  metadata      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Withdrawal {
+  id        String   @id @default(cuid())
+  amount    Float
+  status    String   @default("pending") // pending, processing, completed, failed
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
